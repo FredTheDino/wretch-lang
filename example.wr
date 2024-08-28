@@ -1,6 +1,17 @@
 mod Example
 
-typ 
+typ B = Int
 
-def [Int Int] -> [Int]
+dat Maybe a = Just a | Nothing
+
+def : B, Int -> Int
 def add = +
+
+def : Int -> Int
+def fac = 
+  . if 1 <
+    then ^ 1
+    else . 1 - fac *
+
+def : List Int -> Maybe Int
+def head = ...

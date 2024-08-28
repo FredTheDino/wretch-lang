@@ -2,7 +2,7 @@ use logos::Logos;
 
 #[derive(Logos, Debug, PartialEq, Clone, Copy)]
 #[logos(skip r"[ \t\n\f]+")]
-enum Token<'t> {
+pub enum Token<'t> {
     #[token("mod")]
     Mod,
 
@@ -11,6 +11,14 @@ enum Token<'t> {
 
     #[token("typ")]
     Typ,
+
+    // TODO:
+    // Comments?
+    // Floats
+    // Strings
+    // Case
+    // dat?
+    // Lua?
 
     #[regex("-{3,}")]
     Sep,
@@ -27,9 +35,6 @@ enum Token<'t> {
     #[regex(r"[0-9]*")]
     Int(&'t str),
 
-    #[token(".", priority = 6)]
-    Period,
-
     #[token("{", priority = 6)]
     LBrace,
 
@@ -45,8 +50,21 @@ enum Token<'t> {
     #[token("=", priority = 6)]
     Equal,
 
+    #[token(",", priority = 6)]
+    Comma,
+
+    #[token(":", priority = 6)]
+    Colon,
+
     #[token("->", priority = 6)]
     Arrow,
+
+    #[token("if", priority = 6)]
+    If,
+    #[token("then", priority = 6)]
+    Then,
+    #[token("else", priority = 6)]
+    Else,
 }
 
 #[cfg(test)]
@@ -83,7 +101,7 @@ mod Example
 
 typ 
 
-def [Int Int] -> [Int]
+def Int, Int -> Int
 def add = +
             ",
             &[
@@ -91,14 +109,11 @@ def add = +
                 Propper("Example"),
                 Typ,
                 Def,
-                LBracket,
                 Propper("Int"),
+                Comma,
                 Propper("Int"),
-                RBracket,
                 Arrow,
-                LBracket,
                 Propper("Int"),
-                RBracket,
                 Def,
                 Name("add"),
                 Equal,
