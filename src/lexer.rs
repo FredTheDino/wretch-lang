@@ -1,0 +1,109 @@
+use logos::Logos;
+
+#[derive(Logos, Debug, PartialEq, Clone, Copy)]
+#[logos(skip r"[ \t\n\f]+")]
+enum Token<'t> {
+    #[token("mod")]
+    Mod,
+
+    #[token("def")]
+    Def,
+
+    #[token("typ")]
+    Typ,
+
+    #[regex("-{3,}")]
+    Sep,
+
+    #[regex("[[:upper:]][[:alnum:]]+", priority = 1)]
+    Propper(&'t str),
+
+    #[regex(
+        r"[[:lower:]|([:punct:]&&[^\[\]\{\}\.])][[:alnum:]|[:punct:]]*",
+        priority = 1
+    )]
+    Name(&'t str),
+
+    #[regex(r"[0-9]*")]
+    Int(&'t str),
+
+    #[token(".", priority = 6)]
+    Period,
+
+    #[token("{", priority = 6)]
+    LBrace,
+
+    #[token("}", priority = 6)]
+    RBrace,
+
+    #[token("[", priority = 6)]
+    LBracket,
+
+    #[token("]", priority = 6)]
+    RBracket,
+
+    #[token("=", priority = 6)]
+    Equal,
+
+    #[token("->", priority = 6)]
+    Arrow,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use Token::*;
+
+    fn expect(s: &'static str, o: &[Token]) {
+        assert_eq!(Token::lexer(s).collect::<Result<Vec<_>, _>>(), Ok(o.into()));
+    }
+
+    #[test]
+    fn some_tokens() {
+        expect(
+            "mod ABC def a = 1 2 +",
+            &[
+                Mod,
+                Propper("ABC"),
+                Def,
+                Name("a"),
+                Equal,
+                Int("1"),
+                Int("2"),
+                Name("+"),
+            ],
+        )
+    }
+
+    #[test]
+    fn example_program() {
+        expect(
+            r"
+mod Example
+
+typ 
+
+def [Int Int] -> [Int]
+def add = +
+            ",
+            &[
+                Mod,
+                Propper("Example"),
+                Typ,
+                Def,
+                LBracket,
+                Propper("Int"),
+                Propper("Int"),
+                RBracket,
+                Arrow,
+                LBracket,
+                Propper("Int"),
+                RBracket,
+                Def,
+                Name("add"),
+                Equal,
+                Name("+"),
+            ],
+        )
+    }
+}

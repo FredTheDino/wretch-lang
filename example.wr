@@ -1,0 +1,6 @@
+mod Example
+
+typ 
+
+def [Int Int] -> [Int]
+def add = +
