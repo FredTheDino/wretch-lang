@@ -95,6 +95,7 @@ enum Expr<'s> {
     Chain(Vec<Expr<'s>>),
     Group(Span, Box<Expr<'s>>, Span),
     Ident(N<'s>),
+    Int(&'s str, Span),
     If(Span, Box<Expr<'s>>, Box<Expr<'s>>, Box<Expr<'s>>),
 }
 
@@ -108,6 +109,7 @@ impl<'s> Expr<'s> {
             Expr::Ident(a) => a.span(),
             Expr::If(a, _, _, b) => a.merge(b.span()),
             Expr::Group(a, _, b) => a.merge(*b),
+            Expr::Int(_, a) => *a,
         }
     }
 }
@@ -140,13 +142,14 @@ pub fn parse<'s>(source: &'s str, file_id: FileId) -> (Vec<Msg<'s>>, Option<Ast<
         let mut decls = Vec::new();
 
         while let Ok(_) = prs.recover(|t| matches!(t, Token::Def | Token::Typ)) {
+            if prs.eof() { break }
             if let Some(stmt) = prs.decls() {
                 decls.push(stmt);
             } else {
                 prs.skip();
             }
         }
-        // <Oklartassert!(prs.eof());
+        assert!(prs.eof());
         Some(Ast(name, decls))
     } else {
         None
@@ -240,7 +243,7 @@ impl<'s> Parser<'s> {
         )?;
 
         let mut post = Vec::new();
-        pre.push(self.typ()?);
+        post.push(self.typ()?);
         while matches!(self.peek(), Some((Token::Comma, _))) {
             self.next("Stack arguments are seperated by `,`");
             post.push(self.typ()?);
@@ -267,6 +270,7 @@ impl<'s> Parser<'s> {
 
     fn decl_def_expr(&mut self, typ: Option<DefTyp<'s>>, at: Span) -> Option<Decl<'s>> {
         let name = self.name("Expected a name for the definition")?;
+        expect!(self, Token::Name("="), "Expected `=` followed by an expression")?;
         let body = self.expr(None)?;
         Some(Decl::DefExpr(typ, at, name, body))
     }
@@ -288,12 +292,7 @@ impl<'s> Parser<'s> {
     }
 
     fn typ(&mut self) -> Option<Typ<'s>> {
-        dbg!(&self.peek_());
-        dbg!(&self.i);
-        dbg!(&self.tokens);
-        dbg!(&self.tokens[self.i]);
-        dbg!(&self.panicing);
-        Some(match dbg!(self.peek())? {
+        Some(match self.peek()? {
             (Token::LParen, _open) => {
                 self.next("Expected '('")?;
                 let (pre, arrow_at, post) = self.fn_typ()?;
@@ -305,6 +304,7 @@ impl<'s> Parser<'s> {
                 )?;
                 Typ::Fn(pre, arrow_at, post)
             }
+            // TODO: Higher kinded types
             (Token::Propper(_), _) => Typ::Known(self.propper("Expected the name of a type")?),
             (Token::Name(_), _) => Typ::Var(self.name("Expected the name of a type")?),
             or => {
@@ -325,7 +325,7 @@ impl<'s> Parser<'s> {
     fn expr_inner(&mut self, err: Option<&'static str>) -> Option<Expr<'s>> {
         Some(match self.peek()? {
             (Token::LParen, open) => {
-                self.next("Expected '('")?;
+                self.skip();
                 let inner = self.expr(Some("Expected an expression after `(`"))?;
                 // TODO: point to opening paren
                 let (_, close) = expect!(
@@ -352,7 +352,13 @@ impl<'s> Parser<'s> {
                 let fals = self.expr(Some("Expected expression after `else`"))?;
                 Expr::If(start, Box::new(cond), Box::new(tru), Box::new(fals))
             }
-            (Token::Name(_), _) => Expr::Ident(self.name("Expected the name of a type")?),
+            (Token::Name(_), _) => {
+                Expr::Ident(self.name("Expected an identifier")?)
+            }
+            (Token::Int(n), at) => {
+                self.skip();
+                Expr::Int(n, at)
+            }
             or => {
                 if let Some(msg) = err {
                     self.unexpected(or, msg);
@@ -386,7 +392,7 @@ impl<'s> Parser<'s> {
     }
 
     fn eof(&self) -> bool {
-        self.i > self.tokens.len()
+        self.i >= self.tokens.len()
     }
 
     fn panic(&mut self) {

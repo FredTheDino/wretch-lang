@@ -99,15 +99,12 @@ mod tests {
             r"
 mod Example
 
-typ 
-
 def Int, Int -> Int
 def add = +
             ",
             &[
                 Mod,
                 Propper("Example"),
-                Typ,
                 Def,
                 Propper("Int"),
                 Comma,
