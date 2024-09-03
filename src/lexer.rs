@@ -1,6 +1,6 @@
 use logos::Logos;
 
-#[derive(Logos, Debug, PartialEq, Clone, Copy)]
+#[derive(Logos, Debug, PartialEq, Eq, Clone, Copy)]
 #[logos(skip r"[ \t\n\f]+")]
 pub enum Token<'t> {
     #[token("mod")]
@@ -11,6 +11,9 @@ pub enum Token<'t> {
 
     #[token("typ")]
     Typ,
+
+    #[token("dat")]
+    Dat,
 
     // TODO:
     // Comments?
@@ -23,7 +26,7 @@ pub enum Token<'t> {
     #[regex("-{3,}")]
     Sep,
 
-    #[regex("[[:upper:]][[:alnum:]]+", priority = 1)]
+    #[regex("[[:upper:]][[:alnum:]]*", priority = 1)]
     Propper(&'t str),
 
     #[regex(
@@ -41,23 +44,20 @@ pub enum Token<'t> {
     #[token("}", priority = 6)]
     RBrace,
 
+    #[token("(", priority = 6)]
+    LParen,
+
+    #[token(")", priority = 6)]
+    RParen,
+
     #[token("[", priority = 6)]
     LBracket,
 
     #[token("]", priority = 6)]
     RBracket,
 
-    #[token("=", priority = 6)]
-    Equal,
-
     #[token(",", priority = 6)]
     Comma,
-
-    #[token(":", priority = 6)]
-    Colon,
-
-    #[token("->", priority = 6)]
-    Arrow,
 
     #[token("if", priority = 6)]
     If,
@@ -85,7 +85,7 @@ mod tests {
                 Propper("ABC"),
                 Def,
                 Name("a"),
-                Equal,
+                Name("="),
                 Int("1"),
                 Int("2"),
                 Name("+"),
@@ -112,11 +112,11 @@ def add = +
                 Propper("Int"),
                 Comma,
                 Propper("Int"),
-                Arrow,
+                Name("->"),
                 Propper("Int"),
                 Def,
                 Name("add"),
-                Equal,
+                Name("="),
                 Name("+"),
             ],
         )

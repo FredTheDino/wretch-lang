@@ -2,5 +2,6 @@ mod lexer;
 mod parser;
 
 fn main() {
-    println!("Hello, world!");
+    let source = std::fs::read_to_string("example.wr").unwrap();
+    dbg!(parser::parse(source.as_ref(), parser::FileId(0)));
 }
