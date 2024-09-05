@@ -1,6 +1,9 @@
 use logos::Logos;
 
-use crate::{ast::{Ast, Decl, DefTyp, Expr, FileId, Span, Typ, N, P}, lexer::Token};
+use crate::{
+    ast::{Ast, Decl, DefTyp, Expr, FileId, Span, Typ, N, P},
+    lexer::Token,
+};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Msg<'s> {
@@ -23,7 +26,9 @@ pub fn parse<'s>(source: &'s str, file_id: FileId) -> (Vec<Msg<'s>>, Option<Ast<
         let mut decls = Vec::new();
 
         while let Ok(_) = prs.recover(|t| matches!(t, Token::Def | Token::Typ)) {
-            if prs.eof() { break }
+            if prs.eof() {
+                break;
+            }
             if let Some(stmt) = prs.decls() {
                 decls.push(stmt);
             } else {
@@ -151,7 +156,11 @@ impl<'s> Parser<'s> {
 
     fn decl_def_expr(&mut self, typ: Option<DefTyp<'s>>, at: Span) -> Option<Decl<'s>> {
         let name = self.name("Expected a name for the definition")?;
-        expect!(self, Token::Name("="), "Expected `=` followed by an expression")?;
+        expect!(
+            self,
+            Token::Name("="),
+            "Expected `=` followed by an expression"
+        )?;
         let body = self.expr(None)?;
         Some(Decl::DefExpr(typ, at, name, body))
     }
@@ -168,7 +177,7 @@ impl<'s> Parser<'s> {
         Some(Decl::Typ(at, name, args, typ))
     }
 
-    fn decl_dat(&mut self, at: Span) -> Option<Decl<'s>> {
+    fn decl_dat(&mut self, _at: Span) -> Option<Decl<'s>> {
         todo!()
     }
 
@@ -233,9 +242,7 @@ impl<'s> Parser<'s> {
                 let fals = self.expr(Some("Expected expression after `else`"))?;
                 Expr::If(start, Box::new(cond), Box::new(tru), Box::new(fals))
             }
-            (Token::Name(_), _) => {
-                Expr::Ident(self.name("Expected an identifier")?)
-            }
+            (Token::Name(_), _) => Expr::Ident(self.name("Expected an identifier")?),
             (Token::Int(n), at) => {
                 self.skip();
                 Expr::Int(n, at)
@@ -305,8 +312,23 @@ impl<'s> Parser<'s> {
         match self.tokens.get(self.i).copied() {
             Some(Some(x)) => Some(x),
             Some(None) => {
-                let s = match (self.tokens.iter().take(self.i).rev().find(|x| x.is_some()).copied().flatten().map(|x| x.1),
-                self.tokens.iter().skip(self.i).find(|x| x.is_some()).copied().flatten().map(|x| x.1)) {
+                let s = match (
+                    self.tokens
+                        .iter()
+                        .take(self.i)
+                        .rev()
+                        .find(|x| x.is_some())
+                        .copied()
+                        .flatten()
+                        .map(|x| x.1),
+                    self.tokens
+                        .iter()
+                        .skip(self.i)
+                        .find(|x| x.is_some())
+                        .copied()
+                        .flatten()
+                        .map(|x| x.1),
+                ) {
                     (Some(pre), Some(post)) => pre.merge(post),
                     (Some(pre), None) => pre,
                     (None, Some(post)) => post,
@@ -314,7 +336,7 @@ impl<'s> Parser<'s> {
                 };
                 self.msg(Msg::GaveUp(s));
                 None
-            },
+            }
             None => None,
         }
     }
@@ -365,5 +387,34 @@ impl<'s> Parser<'s> {
             ctx,
             got: Some(got),
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn simple_module() {
+        let x = r"
+mod A
+
+def x = 1 +
+
+def : Int -> Int
+def y = 1 +
+";
+        let (errs, ast) = super::parse(x, super::FileId(0));
+        insta::assert_snapshot!(format!("{:#?}\n\n{:#?}", errs, ast));
+    }
+
+    #[test]
+    fn simple_if() {
+        let x = r"
+mod A
+
+def x = + (if a 0 < then argh else blargh) +
+";
+        let (errs, ast) = super::parse(x, super::FileId(0));
+        insta::assert_snapshot!(format!("{:#?}\n\n{:#?}", errs, ast));
     }
 }

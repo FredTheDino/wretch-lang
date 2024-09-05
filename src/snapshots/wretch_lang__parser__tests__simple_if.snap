@@ -1,0 +1,118 @@
+---
+source: src/parser.rs
+expression: "format!(\"{:#?}\\n\\n{:#?}\", errs, ast)"
+---
+[
+    Unexpected {
+        at: Span(
+            FileId(
+                0,
+            ),
+            28,
+            32,
+        ),
+        ctx: "Expected start of declaration - `def`, `typ` or `dat`",
+        got: Some(
+            Then,
+        ),
+    },
+]
+
+Some(
+    Ast(
+        P(
+            "A",
+            Span(
+                FileId(
+                    0,
+                ),
+                5,
+                6,
+            ),
+        ),
+        [
+            DefExpr(
+                None,
+                Span(
+                    FileId(
+                        0,
+                    ),
+                    8,
+                    11,
+                ),
+                N(
+                    "x",
+                    Span(
+                        FileId(
+                            0,
+                        ),
+                        12,
+                        13,
+                    ),
+                ),
+                Chain(
+                    [
+                        Ident(
+                            N(
+                                "+",
+                                Span(
+                                    FileId(
+                                        0,
+                                    ),
+                                    16,
+                                    17,
+                                ),
+                            ),
+                        ),
+                        Ident(
+                            N(
+                                "(if",
+                                Span(
+                                    FileId(
+                                        0,
+                                    ),
+                                    18,
+                                    21,
+                                ),
+                            ),
+                        ),
+                        Ident(
+                            N(
+                                "a",
+                                Span(
+                                    FileId(
+                                        0,
+                                    ),
+                                    22,
+                                    23,
+                                ),
+                            ),
+                        ),
+                        Int(
+                            "0",
+                            Span(
+                                FileId(
+                                    0,
+                                ),
+                                24,
+                                25,
+                            ),
+                        ),
+                        Ident(
+                            N(
+                                "<",
+                                Span(
+                                    FileId(
+                                        0,
+                                    ),
+                                    26,
+                                    27,
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+        ],
+    ),
+)
