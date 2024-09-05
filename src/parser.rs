@@ -1,6 +1,6 @@
 use logos::Logos;
 
-use crate::lexer::Token;
+use crate::{ast::{Ast, Decl, DefTyp, Expr, FileId, Span, Typ, N, P}, lexer::Token};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Msg<'s> {
@@ -14,125 +14,6 @@ pub enum Msg<'s> {
         ctx: &'static str,
     },
     GaveUp(Span),
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct FileId(pub usize);
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct Span(FileId, usize, usize);
-
-impl Span {
-    fn merge(self, b: Span) -> Span {
-        let a = self;
-        if a.0 == b.0 {
-            Span(a.0, a.1.min(b.1), a.2.max(b.2))
-        } else {
-            a
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-struct N<'s>(&'s str, Span);
-
-#[rustfmt::skip]
-impl<'s> N<'s> { 
-    fn span(&self) -> Span { self.1 }
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-struct P<'s>(&'s str, Span);
-
-#[rustfmt::skip]
-impl<'s> P<'s> {
-    fn span(&self) -> Span { self.1 }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Ast<'s>(P<'s>, Vec<Decl<'s>>);
-
-#[rustfmt::skip]
-impl<'s> Ast<'s> {
-    fn span(&self) -> Span { self.0.span().merge(self.1.last().map_or(self.0.span(), |x| x.span())) }
-    fn name(&self) -> P<'s> { self.0 }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct DefTyp<'s>(Span, Vec<Typ<'s>>, Span, Vec<Typ<'s>>);
-
-impl<'s> DefTyp<'s> {
-    fn span(&self) -> Span {
-        self.0.merge(self.3.last().map_or(self.2, |x| x.span()))
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-enum Decl<'s> {
-    DefExpr(Option<DefTyp<'s>>, Span, N<'s>, Expr<'s>),
-    Typ(Span, P<'s>, Vec<N<'s>>, Typ<'s>),
-    Dat(Span, P<'s>, Vec<N<'s>>, Vec<(P<'s>, Option<Typ<'s>>)>),
-}
-
-impl<'s> Decl<'s> {
-    fn span(&self) -> Span {
-        match self {
-            Decl::DefExpr(d, s, _, _) => d.as_ref().map_or(*s, |x| x.span()),
-            Decl::Typ(s, _, _, _) | Decl::Dat(s, _, _, _) => *s,
-        }
-        .merge(match self {
-            Decl::DefExpr(_, _, _, v) => v.span(),
-            Decl::Typ(_, _, _, v) => v.span(),
-            Decl::Dat(_, p, e, v) => v
-                .last()
-                .map_or_else(|| e.last().map_or(p.span(), |x| x.span()), |x| x.0.span()),
-        })
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-enum Expr<'s> {
-    Chain(Vec<Expr<'s>>),
-    Group(Span, Box<Expr<'s>>, Span),
-    Ident(N<'s>),
-    Int(&'s str, Span),
-    If(Span, Box<Expr<'s>>, Box<Expr<'s>>, Box<Expr<'s>>),
-}
-
-impl<'s> Expr<'s> {
-    fn span(&self) -> Span {
-        match self {
-            Expr::Chain(x) => match x.first().map(|x| x.span()).zip(x.last().map(|x| x.span())) {
-                Some((lo, hi)) => lo.merge(hi),
-                None => unreachable!("Broken invariant - there is no empty expression"),
-            },
-            Expr::Ident(a) => a.span(),
-            Expr::If(a, _, _, b) => a.merge(b.span()),
-            Expr::Group(a, _, b) => a.merge(*b),
-            Expr::Int(_, a) => *a,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-enum Typ<'s> {
-    Fn(Vec<Typ<'s>>, Span, Vec<Typ<'s>>),
-    Known(P<'s>),
-    Var(N<'s>),
-}
-
-impl<'s> Typ<'s> {
-    fn span(&self) -> Span {
-        match self {
-            Typ::Fn(a, m, b) => a
-                .last()
-                .map_or(*m, |x| x.span())
-                .merge(b.last().map_or(*m, |x| x.span())),
-
-            Typ::Known(a) => a.span(),
-            Typ::Var(a) => a.span(),
-        }
-    }
 }
 
 pub fn parse<'s>(source: &'s str, file_id: FileId) -> (Vec<Msg<'s>>, Option<Ast<'s>>) {
@@ -315,7 +196,7 @@ impl<'s> Parser<'s> {
     }
 
     fn expr(&mut self, err: Option<&'static str>) -> Option<Expr<'s>> {
-        let mut links = vec![self.expr_inner(err.or(Some("Expected an expression")))?];
+        let mut links = vec![self.expr_inner(err)?];
         while let Some(next) = self.expr_inner(None) {
             links.push(next);
         }

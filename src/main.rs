@@ -1,7 +1,14 @@
 mod lexer;
 mod parser;
+mod ast;
 
 fn main() {
     let source = std::fs::read_to_string("example.wr").unwrap();
-    dbg!(parser::parse(source.as_ref(), parser::FileId(0)));
+    let (errs, maybe_ast) = parser::parse(source.as_ref(), ast::FileId(0));
+    for (i, e) in errs.iter().enumerate() {
+        dbg!((i, e));
+    }
+    if let Some(ast) = maybe_ast {
+        println!("{}", ast.show())
+    }
 }
