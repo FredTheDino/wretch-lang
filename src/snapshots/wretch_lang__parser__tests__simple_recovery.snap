@@ -1,0 +1,135 @@
+---
+source: src/parser.rs
+expression: "format!(\"{:#?}\\n\\n{:#?}\", errs, ast)"
+---
+[
+    Unexpected {
+        at: Span(
+            FileId(
+                0,
+            ),
+            8,
+            14,
+        ),
+        ctx: "Expected start of declaration - `def`, `typ` or `dat`",
+        got: Some(
+            Name(
+                "blargh",
+            ),
+        ),
+    },
+    Unexpected {
+        at: Span(
+            FileId(
+                0,
+            ),
+            41,
+            42,
+        ),
+        ctx: "Expected `=` followed by an expression",
+        got: Some(
+            Name(
+                "+",
+            ),
+        ),
+    },
+]
+
+Some(
+    Ast(
+        P(
+            "A",
+            Span(
+                FileId(
+                    0,
+                ),
+                5,
+                6,
+            ),
+        ),
+        [
+            DefExpr(
+                None,
+                Span(
+                    FileId(
+                        0,
+                    ),
+                    20,
+                    23,
+                ),
+                N(
+                    "foo",
+                    Span(
+                        FileId(
+                            0,
+                        ),
+                        24,
+                        27,
+                    ),
+                ),
+                Chain(
+                    [
+                        Ident(
+                            N(
+                                "foo",
+                                Span(
+                                    FileId(
+                                        0,
+                                    ),
+                                    30,
+                                    33,
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+            DefExpr(
+                None,
+                Span(
+                    FileId(
+                        0,
+                    ),
+                    46,
+                    49,
+                ),
+                N(
+                    "id",
+                    Span(
+                        FileId(
+                            0,
+                        ),
+                        50,
+                        52,
+                    ),
+                ),
+                Chain(
+                    [
+                        Int(
+                            "1",
+                            Span(
+                                FileId(
+                                    0,
+                                ),
+                                55,
+                                56,
+                            ),
+                        ),
+                        Ident(
+                            N(
+                                "+",
+                                Span(
+                                    FileId(
+                                        0,
+                                    ),
+                                    57,
+                                    58,
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+        ],
+    ),
+)

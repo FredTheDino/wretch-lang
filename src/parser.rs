@@ -297,7 +297,7 @@ impl<'s> Parser<'s> {
         loop {
             if let Some(x) = self.peek_() {
                 if f(x.0) {
-                    self.panicing = true;
+                    self.panicing = false;
                     return Ok(());
                 } else {
                     self.i += 1
@@ -413,6 +413,24 @@ def y = 1 +
 mod A
 
 def x = + (if a 0 < then argh else blargh) +
+";
+        let (errs, ast) = super::parse(x, super::FileId(0));
+        insta::assert_snapshot!(format!("{:#?}\n\n{:#?}", errs, ast));
+    }
+
+    #[test]
+    fn simple_recovery() {
+        let x = r"
+mod A
+
+blargh = 2
+
+def foo = foo
+
+def + + +
+
+def id = 1 +
+
 ";
         let (errs, ast) = super::parse(x, super::FileId(0));
         insta::assert_snapshot!(format!("{:#?}\n\n{:#?}", errs, ast));
