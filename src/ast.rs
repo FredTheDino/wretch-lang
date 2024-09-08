@@ -42,13 +42,23 @@ impl<'s> P<'s> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Ast<'s>(pub P<'s>, pub Vec<Decl<'s>>);
 
-#[rustfmt::skip]
 impl<'s> Ast<'s> {
+    #[rustfmt::skip]
     fn span(&self) -> Span { self.0.span().merge(self.1.last().map_or(self.0.span(), |x| x.span())) }
+    #[rustfmt::skip]
     fn name(&self) -> P<'s> { self.0 }
 
     pub fn show(&self) -> String {
-        format!("mod {}\n\n{}", self.0.show(), self.1.iter().rfold("".into(), |acc, x| format!("{}\n\n{}", acc, x.show())).trim())
+        format!(
+            "mod {}\n\n{}",
+            self.0.show(),
+            self.1
+                .iter()
+                .map(|x| x.show())
+                .collect::<Vec<_>>()
+                .join("\n\n")
+                .trim()
+        )
     }
 }
 
@@ -65,11 +75,15 @@ impl<'s> DefTyp<'s> {
             "def : {} -> {}",
             self.1
                 .iter()
-                .rfold("".into(), |acc, x| format!("{} {}", acc, x.show()))
+                .map(|x| x.show())
+                .collect::<Vec<_>>()
+                .join(", ")
                 .trim(),
             self.3
                 .iter()
-                .rfold("".into(), |acc, x| format!("{} {}", acc, x.show()))
+                .map(|x| x.show())
+                .collect::<Vec<_>>()
+                .join(", ")
                 .trim(),
         )
     }
@@ -110,7 +124,9 @@ impl<'s> Decl<'s> {
                     "typ {}{} = {}",
                     n.show(),
                     xs.iter()
-                        .rfold("".into(), |acc, x| format!("{} {}", acc, x.show()))
+                        .map(|x| x.show())
+                        .collect::<Vec<_>>()
+                        .join(" ")
                         .trim(),
                     t.show()
                 )
@@ -147,7 +163,9 @@ impl<'s> Expr<'s> {
         match self {
             Expr::Chain(a) => a
                 .iter()
-                .rfold("".into(), |acc, x| format!("{} {}", acc, x.show()))
+                .map(|x| x.show())
+                .collect::<Vec<_>>()
+                .join(" ")
                 .trim()
                 .into(),
             Expr::Group(_, x, _) => format!("({})", x.show()),
@@ -188,10 +206,14 @@ impl<'s> Typ<'s> {
             Typ::Fn(a, _, b) => format!(
                 "{} -> {}",
                 a.iter()
-                    .rfold("".into(), |acc, x| format!("{} {}", acc, x.show()))
+                    .map(|x| x.show())
+                    .collect::<Vec<_>>()
+                    .join(" ")
                     .trim(),
                 b.iter()
-                    .rfold("".into(), |acc, x| format!("{} {}", acc, x.show()))
+                    .map(|x| x.show())
+                    .collect::<Vec<_>>()
+                    .join(" ")
                     .trim(),
             ),
             Typ::Known(p) => p.show(),
