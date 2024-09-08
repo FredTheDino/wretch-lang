@@ -2,6 +2,7 @@ use logos::Logos;
 
 #[derive(Logos, Debug, PartialEq, Eq, Clone, Copy)]
 #[logos(skip r"[ \t\n\f]+")]
+#[logos(skip r"-#[^\n]*")]
 pub enum Token<'t> {
     #[token("mod")]
     Mod,
@@ -23,7 +24,7 @@ pub enum Token<'t> {
     // dat?
     // Lua?
 
-    #[regex("-{3,}")]
+    #[regex("-{5,}")]
     Sep,
 
     #[regex("[[:upper:]][[:alnum:]]*", priority = 1)]

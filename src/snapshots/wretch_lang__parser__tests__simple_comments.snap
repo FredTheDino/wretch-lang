@@ -1,0 +1,77 @@
+---
+source: src/parser.rs
+expression: "format!(\"{:#?}\\n\\n{:#?}\", errs, ast)"
+---
+[]
+
+Some(
+    Ast(
+        P(
+            "A",
+            Span(
+                FileId(
+                    0,
+                ),
+                5,
+                6,
+            ),
+        ),
+        [
+            DefExpr(
+                None,
+                Span(
+                    FileId(
+                        0,
+                    ),
+                    50,
+                    53,
+                ),
+                N(
+                    "blargh",
+                    Span(
+                        FileId(
+                            0,
+                        ),
+                        54,
+                        60,
+                    ),
+                ),
+                Chain(
+                    [
+                        Int(
+                            "2",
+                            Span(
+                                FileId(
+                                    0,
+                                ),
+                                63,
+                                64,
+                            ),
+                        ),
+                        Ident(
+                            N(
+                                "+",
+                                Span(
+                                    FileId(
+                                        0,
+                                    ),
+                                    90,
+                                    91,
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+            ),
+            Sep(
+                Span(
+                    FileId(
+                        0,
+                    ),
+                    93,
+                    106,
+                ),
+            ),
+        ],
+    ),
+)

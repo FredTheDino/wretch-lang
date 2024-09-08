@@ -91,6 +91,7 @@ impl<'s> DefTyp<'s> {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Decl<'s> {
+    Sep(Span),
     DefExpr(Option<DefTyp<'s>>, Span, N<'s>, Expr<'s>),
     Typ(Span, P<'s>, Vec<N<'s>>, Typ<'s>),
     Dat(Span, P<'s>, Vec<N<'s>>, Vec<(P<'s>, Option<Typ<'s>>)>),
@@ -100,9 +101,10 @@ impl<'s> Decl<'s> {
     fn span(&self) -> Span {
         match self {
             Decl::DefExpr(d, s, _, _) => d.as_ref().map_or(*s, |x| x.span()),
-            Decl::Typ(s, _, _, _) | Decl::Dat(s, _, _, _) => *s,
+            Decl::Sep(s) | Decl::Typ(s, _, _, _) | Decl::Dat(s, _, _, _) => *s,
         }
         .merge(match self {
+            Decl::Sep(s) => *s,
             Decl::DefExpr(_, _, _, v) => v.span(),
             Decl::Typ(_, _, _, v) => v.span(),
             Decl::Dat(_, p, e, v) => v
@@ -113,6 +115,9 @@ impl<'s> Decl<'s> {
 
     fn show(&self) -> String {
         match self {
+            Decl::Sep(_) => {
+                "-----".into()
+            }
             Decl::DefExpr(Some(ty), _, n, expr) => {
                 format!("{}\ndef {} = {}", ty.show(), n.show(), expr.show())
             }

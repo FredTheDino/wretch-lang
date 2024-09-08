@@ -97,9 +97,10 @@ impl<'s> Parser<'s> {
     fn decls(&mut self) -> Option<Decl<'s>> {
         match expect!(
             self,
-            Token::Def | Token::Typ | Token::Dat,
-            "Expected start of declaration - `def`, `typ` or `dat`"
+            Token::Def | Token::Typ | Token::Dat | Token::Sep,
+            "Expected start of declaration - `def`, `typ`, `dat` or lots of dashes"
         )? {
+            (Token::Sep, at) => Some(Decl::Sep(at)),
             (Token::Def, at) => {
                 if let Some((Token::Name(":"), _)) = self.peek() {
                     self.decl_def_ty(at)
@@ -430,6 +431,24 @@ def foo = foo
 def + + +
 
 def id = 1 +
+
+";
+        let (errs, ast) = super::parse(x, super::FileId(0));
+        insta::assert_snapshot!(format!("{:#?}\n\n{:#?}", errs, ast));
+    }
+
+    #[test]
+    fn simple_comments() {
+        let x = r"
+mod A
+
+-# This is a comment
+-# This is a comment
+def blargh = 2
+-# This is a comment
+    +
+
+-------------
 
 ";
         let (errs, ast) = super::parse(x, super::FileId(0));

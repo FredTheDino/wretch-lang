@@ -11,7 +11,7 @@ expression: "format!(\"{:#?}\\n\\n{:#?}\", errs, ast)"
             8,
             14,
         ),
-        ctx: "Expected start of declaration - `def`, `typ` or `dat`",
+        ctx: "Expected start of declaration - `def`, `typ`, `dat` or lots of dashes",
         got: Some(
             Name(
                 "blargh",
