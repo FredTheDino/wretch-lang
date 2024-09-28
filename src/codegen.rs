@@ -2,7 +2,7 @@ use std::io::{Error, Write};
 
 use crate::{ast::Span, rst};
 
-struct Gen<'s>(Box<dyn Write>, Vec<(&'s str, Span)>);
+struct Gen<'s>(Box<dyn Write>, Vec<(&'s str, Span)>, usize);
 
 impl<'s> Gen<'s> {
     fn name(&self, i: &rst::I) -> &'s str {
@@ -14,9 +14,11 @@ impl<'s> Gen<'s> {
         writeln!(self.0, "{}", s)?;
         writeln!(self.0, "")?;
         writeln!(self.0, "-- mod {}", self.name(&rst.0))?;
+        self.indent();
         for decl in rst.1.iter() {
             self.decl(decl)?;
         }
+        self.dedent();
         Ok(())
     }
 
@@ -28,7 +30,7 @@ impl<'s> Gen<'s> {
             }
             rst::Decl::DefExpr(_, _, _, n, expr) => {
                 writeln!(self.0, "-- def {}", self.name(n))?;
-                write!(self.0, "local function _{}(stack) ", n.0)?;
+                write!(self.0, "local function _{}(s) ", n.0)?;
                 self.expr(expr)?;
                 writeln!(self.0, "end")?;
 
@@ -45,16 +47,22 @@ impl<'s> Gen<'s> {
     fn expr(&mut self, expr: &rst::Expr) -> Result<(), Error> {
         match expr {
             rst::Expr::Chain(chain) => {
+                writeln!(self.0, "")?;
+                self.i()?;
                 writeln!(self.0, "(function() ")?;
+                self.indent();
                 for c in chain.iter() {
+                    self.i()?;
                     self.expr(c)?;
                     writeln!(self.0, "")?;
                 }
+                self.dedent();
+                self.i()?;
                 writeln!(self.0, "end)()")?;
             }
             rst::Expr::Group(_, expr, _) => self.expr(expr)?,
-            rst::Expr::Ident(i) => write!(self.0, "_{}(stack)", i.0)?,
-            rst::Expr::Int(n) => write!(self.0, "_push(stack, {})", n)?,
+            rst::Expr::Ident(i) => write!(self.0, "_{}(s)", i.0)?,
+            rst::Expr::Int(n) => write!(self.0, "_push(s, {})", n)?,
             rst::Expr::If(_, c, tru, fal) => {
                 write!(self.0, "(function() if ")?;
                 self.expr(c)?;
@@ -68,6 +76,20 @@ impl<'s> Gen<'s> {
         };
         Ok(())
     }
+
+    fn i(&mut self) -> Result<(), Error> {
+        for _ in 0..self.2 {
+            write!(self.0, "  ")?;
+        }
+        Ok(())
+    }
+
+    fn indent(&mut self) {
+        self.2 += 1;
+    }
+    fn dedent(&mut self) {
+        self.2 -= 1;
+    }
 }
 
 pub(crate) fn gen<'s>(
@@ -75,5 +97,5 @@ pub(crate) fn gen<'s>(
     rst: crate::rst::Rst,
     mapping: Vec<(&'s str, Span)>,
 ) -> Result<(), Error> {
-    Gen(Box::new(f), mapping).rst(rst)
+    Gen(Box::new(f), mapping, 0).rst(rst)
 }
