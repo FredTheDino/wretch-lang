@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 logos = { version = "0.14.1" }
+drop_bomb = { version = "0.1.5" }
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["yaml"] }

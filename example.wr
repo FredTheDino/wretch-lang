@@ -1,7 +1,29 @@
 mod Example
 
+typ Unit = foreign
+typ Int = foreign
+
+def : Unit -> Unit
+def pop = foreign
+
+def : Int -> Unit
+def _print = foreign
+
+def : Int, Int -> Int
+def add = foreign
+
+def : Int, Int -> Int
+def + = add
+
 def : Int -> Int
 def inc = 1 +
 
+---------------
+
+-# This is a comment
+-# More comments
 def : Int, Int, Int, Int -> Int
-def inc = + + +
+def example = + + + inc
+
+def : Unit -> Unit
+def main = 1 1 1 1 example _print pop

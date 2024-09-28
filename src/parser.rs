@@ -162,7 +162,13 @@ impl<'s> Parser<'s> {
             Token::Name("="),
             "Expected `=` followed by an expression"
         )?;
-        let body = self.expr(None)?;
+
+        let body = if let Some((Token::Foreign, at)) = self.peek() {
+            self.skip();
+            Expr::Foreign(at)
+        } else {
+            self.expr(None)?
+        };
         Some(Decl::DefExpr(typ, at, name, body))
     }
 
@@ -170,6 +176,9 @@ impl<'s> Parser<'s> {
         let name = self.propper("A type alias must have a propper name")?;
         let mut args = Vec::new();
         while let Some((Token::Name(n), at)) = self.peek() {
+            if n == "=" {
+                break;
+            }
             self.next("Expected a valid name");
             args.push(N(n, at));
         }
@@ -198,6 +207,10 @@ impl<'s> Parser<'s> {
             // TODO: Higher kinded types
             (Token::Propper(_), _) => Typ::Known(self.propper("Expected the name of a type")?),
             (Token::Name(_), _) => Typ::Var(self.name("Expected the name of a type")?),
+            (Token::Foreign, at) => {
+                self.next("Expected 'foreign'")?;
+                Typ::Foreign(at)
+            }
             or => {
                 self.unexpected(or, "Expected the start of a type - `(`, `Name` or `name´");
                 return None;

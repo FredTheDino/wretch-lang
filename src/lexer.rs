@@ -60,6 +60,8 @@ pub enum Token<'t> {
     #[token(",", priority = 6)]
     Comma,
 
+    #[token("foreign", priority = 6)]
+    Foreign,
     #[token("if", priority = 6)]
     If,
     #[token("then", priority = 6)]

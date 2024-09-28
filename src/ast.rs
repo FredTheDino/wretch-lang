@@ -115,9 +115,7 @@ impl<'s> Decl<'s> {
 
     fn show(&self) -> String {
         match self {
-            Decl::Sep(_) => {
-                "-----".into()
-            }
+            Decl::Sep(_) => "-----".into(),
             Decl::DefExpr(Some(ty), _, n, expr) => {
                 format!("{}\ndef {} = {}", ty.show(), n.show(), expr.show())
             }
@@ -148,6 +146,7 @@ pub enum Expr<'s> {
     Ident(N<'s>),
     Int(&'s str, Span),
     If(Span, Box<Expr<'s>>, Box<Expr<'s>>, Box<Expr<'s>>),
+    Foreign(Span),
 }
 
 impl<'s> Expr<'s> {
@@ -161,6 +160,7 @@ impl<'s> Expr<'s> {
             Expr::If(a, _, _, b) => a.merge(b.span()),
             Expr::Group(a, _, b) => a.merge(*b),
             Expr::Int(_, a) => *a,
+            Expr::Foreign(s) => *s,
         }
     }
 
@@ -182,6 +182,7 @@ impl<'s> Expr<'s> {
                 tru.show(),
                 fals.show()
             ),
+            Expr::Foreign(_) => "foreign".into(),
         }
     }
 }
@@ -191,6 +192,7 @@ pub enum Typ<'s> {
     Fn(Vec<Typ<'s>>, Span, Vec<Typ<'s>>),
     Known(P<'s>),
     Var(N<'s>),
+    Foreign(Span),
 }
 
 impl<'s> Typ<'s> {
@@ -203,6 +205,7 @@ impl<'s> Typ<'s> {
 
             Typ::Known(a) => a.span(),
             Typ::Var(a) => a.span(),
+            Typ::Foreign(s) => *s,
         }
     }
 
@@ -223,6 +226,7 @@ impl<'s> Typ<'s> {
             ),
             Typ::Known(p) => p.show(),
             Typ::Var(v) => v.show(),
+            Typ::Foreign(_) => "foreign".into(),
         }
     }
 }
