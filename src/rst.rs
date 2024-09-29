@@ -163,11 +163,10 @@ impl<'s> Resolver<'s> {
             }
             ast::Expr::Ident(n) => Expr::Ident(self.n(n)),
             ast::Expr::Int(s, _at) => Expr::Int(s.parse().unwrap()),
-            ast::Expr::If(at, a, b, c) => Expr::If(
+            ast::Expr::If(at, a, b) => Expr::If(
                 *at,
                 Box::new(self.expr(a)),
                 Box::new(self.expr(b)),
-                Box::new(self.expr(c)),
             ),
             ast::Expr::Foreign(at) => Expr::Foreign(*at),
         }
@@ -193,7 +192,7 @@ pub enum Expr {
     Group(Span, Box<Expr>, Span),
     Ident(I),
     Int(i64),
-    If(Span, Box<Expr>, Box<Expr>, Box<Expr>),
+    If(Span, Box<Expr>, Box<Expr>),
     Foreign(Span),
 }
 impl Expr {

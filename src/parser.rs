@@ -118,10 +118,12 @@ impl<'s> Parser<'s> {
 
     fn fn_typ(&mut self) -> Option<(Vec<Typ<'s>>, Span, Vec<Typ<'s>>)> {
         let mut pre = Vec::new();
-        pre.push(self.typ()?);
-        while matches!(self.peek(), Some((Token::Comma, _))) {
-            self.next("Stack arguments are seperated by `,`");
-            pre.push(self.typ()?);
+        if let Some(ty) = self.typ() {
+            pre.push(ty);
+            while matches!(self.peek(), Some((Token::Comma, _))) {
+                self.next("Stack arguments are seperated by `,`");
+                pre.push(self.typ()?);
+            }
         }
         let (_, arrow_at) = expect!(
             self,
@@ -130,10 +132,12 @@ impl<'s> Parser<'s> {
         )?;
 
         let mut post = Vec::new();
-        post.push(self.typ()?);
-        while matches!(self.peek(), Some((Token::Comma, _))) {
-            self.next("Stack arguments are seperated by `,`");
-            post.push(self.typ()?);
+        if let Some(ty) = self.typ() {
+            post.push(ty);
+            while matches!(self.peek(), Some((Token::Comma, _))) {
+                self.next("Stack arguments are seperated by `,`");
+                post.push(self.typ()?);
+            }
         }
         Some((pre, arrow_at, post))
     }
@@ -191,7 +195,7 @@ impl<'s> Parser<'s> {
         todo!()
     }
 
-    fn typ(&mut self) -> Option<Typ<'s>> {
+    fn typ_(&mut self) -> Option<Typ<'s>> {
         Some(match self.peek()? {
             (Token::LParen, _open) => {
                 self.next("Expected '('")?;
@@ -211,11 +215,20 @@ impl<'s> Parser<'s> {
                 self.next("Expected 'foreign'")?;
                 Typ::Foreign(at)
             }
-            or => {
-                self.unexpected(or, "Expected the start of a type - `(`, `Name` or `name´");
-                return None;
-            }
+            _or => return None,
         })
+    }
+
+    fn typ(&mut self) -> Option<Typ<'s>> {
+        match self.typ_() {
+            Some(n) => Some(n),
+            None => {
+                if let Some(or) = self.peek() {
+                    self.unexpected(or, "Expected the start of a type - `(`, `Name` or `name´");
+                }
+                None
+            }
+        }
     }
 
     fn expr(&mut self, err: Option<&'static str>) -> Option<Expr<'s>> {
@@ -241,20 +254,14 @@ impl<'s> Parser<'s> {
             }
             (Token::If, _) => {
                 let (_, start) = expect!(self, Token::If, "if-expressions start with `if`")?;
-                let cond = self.expr(Some("Expected expression after `if`"))?;
-                let (_, _) = expect!(
-                    self,
-                    Token::Then,
-                    "`then` should come after the if-expression condition"
-                )?;
-                let tru = self.expr(Some("Expected expression after `then`"))?;
+                let tru = self.expr(Some("Expected expression after `if`"))?;
                 let (_, _) = expect!(
                     self,
                     Token::Else,
                     "`else` should come after the if-expressions true-branch"
                 )?;
                 let fals = self.expr(Some("Expected expression after `else`"))?;
-                Expr::If(start, Box::new(cond), Box::new(tru), Box::new(fals))
+                Expr::If(start, Box::new(tru), Box::new(fals))
             }
             (Token::Name(_), _) => Expr::Ident(self.name("Expected an identifier")?),
             (Token::Int(n), at) => {

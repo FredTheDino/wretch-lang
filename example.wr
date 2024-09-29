@@ -2,6 +2,7 @@ mod Example
 
 typ Unit = foreign
 typ Int = foreign
+typ Bool = foreign
 
 def : Unit -> Unit
 def pop = foreign
@@ -12,6 +13,9 @@ def _print = foreign
 def : Int, Int -> Int
 def add = foreign
 
+def : Int -> Bool
+def is_odd = foreign
+
 def : Int, Int -> Int
 def + = add
 
@@ -20,10 +24,13 @@ def inc = 1 +
 
 ---------------
 
+def : Int -> Int
+def branch = is_odd if 2 else 1
+
 -# This is a comment
 -# More comments
 def : Int, Int, Int, Int -> Int
 def example = + + + inc
 
 def : Unit -> Unit
-def main = 1 1 1 1 example _print pop
+def main = 1 1 1 1 example branch _print pop

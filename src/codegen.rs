@@ -63,14 +63,18 @@ impl<'s> Gen<'s> {
             rst::Expr::Group(_, expr, _) => self.expr(expr)?,
             rst::Expr::Ident(i) => write!(self.0, "_{}(s)", i.0)?,
             rst::Expr::Int(n) => write!(self.0, "_push(s, {})", n)?,
-            rst::Expr::If(_, c, tru, fal) => {
-                write!(self.0, "(function() if ")?;
-                self.expr(c)?;
-                write!(self.0, "then return ")?;
+            rst::Expr::If(_, tru, fal) => {
+                write!(self.0, "if _pop(s) then")?;
+                self.indent();
                 self.expr(tru)?;
-                write!(self.0, "else return ")?;
+                self.dedent();
+                self.i()?;
+                write!(self.0, "else")?;
+                self.indent();
                 self.expr(fal)?;
-                write!(self.0, "end end)()")?;
+                self.dedent();
+                self.i()?;
+                write!(self.0, "end")?;
             }
             rst::Expr::Foreign(_) => unreachable!(),
         };

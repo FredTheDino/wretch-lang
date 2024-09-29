@@ -145,7 +145,7 @@ pub enum Expr<'s> {
     Group(Span, Box<Expr<'s>>, Span),
     Ident(N<'s>),
     Int(&'s str, Span),
-    If(Span, Box<Expr<'s>>, Box<Expr<'s>>, Box<Expr<'s>>),
+    If(Span, Box<Expr<'s>>, Box<Expr<'s>>),
     Foreign(Span),
 }
 
@@ -157,7 +157,7 @@ impl<'s> Expr<'s> {
                 None => unreachable!("Broken invariant - there is no empty expression"),
             },
             Expr::Ident(a) => a.span(),
-            Expr::If(a, _, _, b) => a.merge(b.span()),
+            Expr::If(a, _, b) => a.merge(b.span()),
             Expr::Group(a, _, b) => a.merge(*b),
             Expr::Int(_, a) => *a,
             Expr::Foreign(s) => *s,
@@ -176,9 +176,8 @@ impl<'s> Expr<'s> {
             Expr::Group(_, x, _) => format!("({})", x.show()),
             Expr::Ident(n) => n.show(),
             Expr::Int(i, _) => format!("{}", i),
-            Expr::If(_, cond, tru, fals) => format!(
-                "if {} then {} else {}",
-                cond.show(),
+            Expr::If(_, tru, fals) => format!(
+                "if {} else {}",
                 tru.show(),
                 fals.show()
             ),
