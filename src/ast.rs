@@ -13,6 +13,10 @@ impl Span {
             a
         }
     }
+
+    pub fn zero() -> Span {
+        Span(FileId(0), 0, 0)
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -176,11 +180,7 @@ impl<'s> Expr<'s> {
             Expr::Group(_, x, _) => format!("({})", x.show()),
             Expr::Ident(n) => n.show(),
             Expr::Int(i, _) => format!("{}", i),
-            Expr::If(_, tru, fals) => format!(
-                "if {} else {}",
-                tru.show(),
-                fals.show()
-            ),
+            Expr::If(_, tru, fals) => format!("if {} else {}", tru.show(), fals.show()),
             Expr::Foreign(_) => "foreign".into(),
         }
     }

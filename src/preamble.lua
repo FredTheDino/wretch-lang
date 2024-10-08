@@ -1,13 +1,13 @@
 -- Premable
 
 local function _push(stack, n)
-  print(">", #stack, n)
+  -- print(">", #stack, n)
   table.insert(stack, n)
 end
 
 local function _pop(stack)
   local n = table.remove(stack)
-  print("<", #stack, n)
+  -- print("<", #stack, n)
   return n
 end
 

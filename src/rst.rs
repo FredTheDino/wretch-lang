@@ -9,7 +9,7 @@ pub enum Rerror {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct I(pub usize);
+pub struct I(pub usize, pub Span);
 
 #[derive(Debug)]
 pub struct At(usize, DropBomb);
@@ -39,7 +39,7 @@ impl<'s> Resolver<'s> {
     }
 
     fn push(&mut self, name: &'s str, span: Span) {
-        let i = I(self.names.len());
+        let i = I(self.names.len(), span);
         self.names.push((name, span));
         self.stack.push((name, i));
     }
@@ -68,7 +68,7 @@ impl<'s> Resolver<'s> {
     fn resolve(&mut self, s: &'s str, at: Span) -> I {
         self.resolve_(s).unwrap_or_else(|| {
             self.errors.push(Rerror::Unknown(s.to_string(), at));
-            I(0)
+            I(0, at)
         })
     }
 
@@ -85,7 +85,7 @@ impl<'s> Resolver<'s> {
             ast::Decl::DefExpr(_, _, name, _) => (name.0, name.1),
             ast::Decl::Typ(_, name, _, _) | ast::Decl::Dat(_, name, _, _) => (name.0, name.1),
         };
-        if let Some(I(i)) = self.resolve_(n) {
+        if let Some(I(i, _)) = self.resolve_(n) {
             self.errors.push(Rerror::Collision(
                 n.into(),
                 s,
@@ -163,11 +163,9 @@ impl<'s> Resolver<'s> {
             }
             ast::Expr::Ident(n) => Expr::Ident(self.n(n)),
             ast::Expr::Int(s, _at) => Expr::Int(s.parse().unwrap()),
-            ast::Expr::If(at, a, b) => Expr::If(
-                *at,
-                Box::new(self.expr(a)),
-                Box::new(self.expr(b)),
-            ),
+            ast::Expr::If(at, a, b) => {
+                Expr::If(*at, Box::new(self.expr(a)), Box::new(self.expr(b)))
+            }
             ast::Expr::Foreign(at) => Expr::Foreign(*at),
         }
     }
@@ -207,6 +205,16 @@ pub enum Typ {
     Known(I),
     Var(I),
     Foreign(Span),
+}
+impl Typ {
+    pub(crate) fn at(&self) -> Span {
+        match self {
+            Typ::Fn(a, at, b) => a.first().map(|x| x.at()).unwrap_or(*at).merge(b.last().map(|x| x.at()).unwrap_or(*at)),
+            Typ::Known(i) => i.1,
+            Typ::Var(i) => i.1,
+            Typ::Foreign(s) => *s,
+        }
+    }
 }
 
 pub fn resolve<'s>(ast: &ast::Ast<'s>) -> (Rst, Vec<(&'s str, Span)>, Vec<Rerror>) {
